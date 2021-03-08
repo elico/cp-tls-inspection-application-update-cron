@@ -2,7 +2,7 @@
 
 wget http://f-gogs.ngtech.home/NgTech-Home/tls-bypass-lists/raw/master/010-GeneralTLSInspectionBypass -O /tmp/010-GeneralTLSInspectionBypass
 
-CURRENT_CONTENT=$(clish -c "show application application-name \"GeneralTLSInspectionBypass\""|egrep -v "^(description:|$|application-urls:|Categories:|application-id:|applic
+CURRENT_CONTENT=$(clish -c "show application application-name \"GeneralTLSInspectionBypass\""|egrep -v "^(description:|$|application-urls:|Categories:|application-id:|application-name:)" |awk '{print $1}')
 
 function add_regex() {
         echo "$2"|grep -x -F "$1" >/dev/null
