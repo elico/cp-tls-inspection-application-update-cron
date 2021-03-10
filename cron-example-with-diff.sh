@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
-DEBUG="1"
+DEBUG="0"
 DRY_RUN="0"
+CLEANUP_AFTER="1"
+REGEX_FLAG_ENABLED="0"
 
 APP_NAME="$1"
 
@@ -40,15 +42,33 @@ TMP_CLISH_TRANSACTION_FILE=$( mktemp )
 
 clish -c "show configuration"|egrep "^set application application-name \"${APP_NAME}\"" > ${TMP_CURRENT_CONFIG_FILE}
 
-while read line; do
+CURRENT_APP_CONTENT=$( cat ${TMP_CURRENT_CONFIG_FILE}| awk '{print $7}' )
+
+while IFS= read -r line
+do
         if [ "${DEBUG}" -gt "0" ];then
                 echo -n "DEBUG LEVEL 1: Working on regex: " >&2
-                echo ${line} >&2
+                echo "${line}" >&2
         fi
-        echo "set application application-name \"${APP_NAME}\" regex-url true add url \"$line\"" >> ${TMP_CLISH_UPDATE_FILE}
+        echo "${CURRENT_APP_CONTENT}"|  grep -x -F "${line}" >/dev/null
+        RES=$?
+
+        if [ "${RES}" -gt "0" ];then
+	       if [ "${REGEX_FLAG_ENABLED}" -eq "1" ];then
+        	       echo "set application application-name \"${APP_NAME}\" regex-url true add url \"${line}\"" >> ${TMP_CLISH_UPDATE_FILE}
+	       else
+	               echo "set application application-name \"${APP_NAME}\" add url \"${line}\"" >> ${TMP_CLISH_UPDATE_FILE}
+	       fi
+        fi
+
 done < ${TMP_DOWNLOAD_FILE}
 
 DIFF=$(diff "${TMP_CURRENT_CONFIG_FILE}" "${TMP_CLISH_UPDATE_FILE}" )
+
+if [ "${DEBUG}" -gt "0" ];then
+        echo "DIFF Size: $(echo "${DIFF}"|wc -l)"
+        echo "${DIFF}"
+fi
 
 DELETE_OBJECTS=$(echo "${DIFF}" |egrep "^-set " |awk '{print $7}')
 
@@ -67,7 +87,16 @@ fi
 echo "Finished Transaction"
 echo "Cleaning up files ..."
 
-rm -v "${TMP_DOWNLOAD_FILE}"
-rm -v "${TMP_CLISH_UPDATE_FILE}"
-rm -v "${TMP_CURRENT_CONFIG_FILE}"
-rm -v "${TMP_CLISH_TRANSACTION_FILE}"
+if [ "${CLEANUP_AFTER}" -eq "1" ];then
+        rm -v "${TMP_DOWNLOAD_FILE}"
+        rm -v "${TMP_CLISH_UPDATE_FILE}"
+        rm -v "${TMP_CURRENT_CONFIG_FILE}"
+        rm -v "${TMP_CLISH_TRANSACTION_FILE}"
+else
+        echo "Don't forget to cleanup the files:"
+        echo "${TMP_DOWNLOAD_FILE}"
+        echo "${TMP_CLISH_UPDATE_FILE}"
+        echo "${TMP_CURRENT_CONFIG_FILE}"
+        echo "${TMP_CLISH_TRANSACTION_FILE}"
+fi
+
