@@ -7,7 +7,7 @@ REGEX_FLAG_ENABLED="0"
 
 APP_NAME="$1"
 
-URL="http://f-gogs.ngtech.home/NgTech-Home/tls-bypass-lists/raw/master/010-GeneralTLSInspectionBypass"
+URL="https://gist.githubusercontent.com/elico/249034a199d17ce52524f47fad49964f/raw/94d4c90614a9eddfb5d0b8c01f3d636ddb3909da/010-GeneralTLSInspectionBypass"
 
 if [ -z "${APP_NAME}" ];then
         echo "Missing App Name"
