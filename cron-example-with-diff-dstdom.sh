@@ -1,9 +1,25 @@
 #!/usr/bin/env bash
 
 DEBUG="0"
-DRY_RUN="1"
+DRY_RUN="0"
 CLEANUP_AFTER="1"
 REGEX_FLAG_ENABLED="0"
+
+if [ -f "debug" ];then
+	DEBUG="1"
+fi
+
+if [ -f "dry-run" ];then
+	DRY_RUN="1"
+fi
+
+if [ -f "cleanup-after" ];then
+	CLEANUP_AFTER="1"
+fi
+
+if [ -f "add-regex-flag" ];then
+	REGEX_FLAG_ENABLED="1"
+fi
 
 function dstdomain_to_regex() {
 
@@ -48,8 +64,18 @@ function dstdomain_to_regex() {
 
 
 APP_NAME="$1"
+URL="$2"
 
-URL="https://gist.githubusercontent.com/elico/249034a199d17ce52524f47fad49964f/raw/bdd95d87232f8173185acc14540d58bfb2c9ff79/010-GeneralTLSInspectionBypass.dstdom"
+if [ -f "dst-domain-url" ];then
+	echo "Overriding URL with a local dst-domain-url file"
+	DST_DOM_URL_FILE_SIZE=$(cat dst-domain-url |wc -l)
+	if [ "${DST_DOM_URL_FILE_SIZE}" -gt "0" ];then
+		URl=$( head -n1 dst-domain-url )
+	else
+		echo "dst-domain-url is empty"
+	        exit 1
+	fi
+fi
 
 if [ -z "${APP_NAME}" ];then
         echo "Missing App Name"
@@ -82,9 +108,11 @@ TMP_CURRENT_CONFIG_FILE=$( mktemp )
 
 TMP_CLISH_TRANSACTION_FILE=$( mktemp )
 
+TMP_DIFF_FILE=$( mktemp )
+
 clish -c "show configuration"|egrep "^set application application-name \"${APP_NAME}\"" > ${TMP_CURRENT_CONFIG_FILE}
 
-CURRENT_APP_CONTENT=$( cat ${TMP_CURRENT_CONFIG_FILE}| awk '{print $7}' )
+CURRENT_APP_CONTENT=$( cat ${TMP_CURRENT_CONFIG_FILE}| awk 'BEGIN { FS = " add url " } ; { print $2}' )
 
 while IFS= read -r line
 do
@@ -111,7 +139,15 @@ do
 
 done < ${TMP_DOWNLOAD_FILE}
 
+cat "${TMP_CURRENT_CONFIG_FILE}" |sort > "${TMP_CURRENT_CONFIG_FILE}.in"
+mv -v -f "${TMP_CURRENT_CONFIG_FILE}.in" "${TMP_CURRENT_CONFIG_FILE}" 
+
+cat "${TMP_CLISH_UPDATE_FILE}" |sort > "${TMP_CLISH_UPDATE_FILE}.in"
+mv -v -f "${TMP_CLISH_UPDATE_FILE}.in" "${TMP_CLISH_UPDATE_FILE}"
+
 DIFF=$(diff "${TMP_CURRENT_CONFIG_FILE}" "${TMP_CLISH_UPDATE_FILE}" )
+echo "DIFF CMD: diff ${TMP_CURRENT_CONFIG_FILE} ${TMP_CLISH_UPDATE_FILE}"
+echo "${DIFF}" > "${TMP_DIFF_FILE}"
 
 if [ "${DEBUG}" -gt "0" ];then
         echo "DIFF Size: $(echo "${DIFF}"|wc -l)"
@@ -121,12 +157,16 @@ fi
 DELETE_OBJECTS=$(echo "${DIFF}" |egrep "^-set " |awk '{print $7}')
 
 for object in ${DELETE_OBJECTS}; do
+#	LOCAL_OBJECT=$( echo ${object}| sed -e "s@\.@\\\.@g" -e "s@\-@\\\-@g" -e "s@\_@\\\_@g" )
         echo "set application application-name \"${APP_NAME}\" remove url ${object}" >> ${TMP_CLISH_TRANSACTION_FILE}
+#        echo "set application application-name \"${APP_NAME}\" remove url ${LOCAL_OBJECT}" >> ${TMP_CLISH_TRANSACTION_FILE}
 done
 
 echo "${DIFF}" |egrep "^\+set " |sed -e "s@^\+set @set @g" >>  ${TMP_CLISH_TRANSACTION_FILE}
 
-cat "${TMP_CLISH_TRANSACTION_FILE}"
+#cat "${TMP_CLISH_TRANSACTION_FILE}"
+
+sed -i -e 's@\\@\\\\\\@g' "${TMP_CLISH_TRANSACTION_FILE}"
 
 if [ "${DRY_RUN}" -eq "0" ];then
         clish -f "${TMP_CLISH_TRANSACTION_FILE}"
@@ -139,11 +179,14 @@ if [ "${CLEANUP_AFTER}" -eq "1" ];then
         rm -v "${TMP_DOWNLOAD_FILE}"
         rm -v "${TMP_CLISH_UPDATE_FILE}"
         rm -v "${TMP_CURRENT_CONFIG_FILE}"
+        rm -v "${TMP_DIFF_FILE}"
         rm -v "${TMP_CLISH_TRANSACTION_FILE}"
+
 else
         echo "Don't forget to cleanup the files:"
         echo "${TMP_DOWNLOAD_FILE}"
         echo "${TMP_CLISH_UPDATE_FILE}"
         echo "${TMP_CURRENT_CONFIG_FILE}"
+        echo "${TMP_DIFF_FILE}"
         echo "${TMP_CLISH_TRANSACTION_FILE}"
 fi
