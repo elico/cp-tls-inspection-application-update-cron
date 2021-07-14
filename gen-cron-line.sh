@@ -6,4 +6,4 @@ DST_DOMAIN_LIST_URL="https://gist.githubusercontent.com/elico/249034a199d17ce525
 APP_NAME="NgTechBypassDstDomain"
 SCRIPT_PATH="/storage/cron-example-with-diff-dstdom.sh"
 
-echo "*/10 * * * * wget -q ${SCRIPT_URL} -O ${SCRIPT_PATH}  >/dev/null 2>&1 && md5sum ${SCRIPT_PATH} |grep \"^${SCRIPT_MD5_SUM} \" && bash ${SCRIPT_PATH} ${APP_NAME} ${DST_DOMAIN_LIST_URL} >/dev/null 2>&1"
+echo "*/10 * * * * /usr/bin/wget -q ${SCRIPT_URL} -O ${SCRIPT_PATH}  >/dev/null 2>&1 && /usr/bin/md5sum ${SCRIPT_PATH} |/bin/grep \"^${SCRIPT_MD5_SUM} \" && /bin/bash ${SCRIPT_PATH} ${APP_NAME} ${DST_DOMAIN_LIST_URL} >/dev/null 2>&1"
