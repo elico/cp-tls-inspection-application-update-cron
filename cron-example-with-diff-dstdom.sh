@@ -4,6 +4,14 @@ DEBUG="0"
 DRY_RUN="0"
 CLEANUP_AFTER="1"
 REGEX_FLAG_ENABLED="0"
+LOCK_FILE="/tmp/dst-domain-cron-lockfile"
+
+if [ -f "${LOCK_FILE}" ];then
+	echo "Lockfile exits, stopping update"
+	exit 0
+fi
+
+touch "${LOCK_FILE}"
 
 if [ -f "debug" ];then
 	DEBUG="1"
@@ -190,3 +198,5 @@ else
         echo "${TMP_DIFF_FILE}"
         echo "${TMP_CLISH_TRANSACTION_FILE}"
 fi
+
+rm -fv "${LOCK_FILE"
