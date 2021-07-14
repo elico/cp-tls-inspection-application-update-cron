@@ -199,4 +199,4 @@ else
         echo "${TMP_CLISH_TRANSACTION_FILE}"
 fi
 
-rm -fv "${LOCK_FILE"
+rm -fv "${LOCK_FILE}"
