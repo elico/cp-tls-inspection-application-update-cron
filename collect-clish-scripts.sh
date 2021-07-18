@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+export CPDIR=/opt/fw1
+export FWDIR=${CPDIR}
+export SUROOT=/var/suroot
+. /pfrm2.0/etc/bashrc
+
 if [ "$( pt users -f username $USER -F role | head -n 1 | grep -v {} )" != "ROLE.SUPER" ];then
           echo "This script can only run from a user with ROLE.SUPER ie super user"
           exit 1

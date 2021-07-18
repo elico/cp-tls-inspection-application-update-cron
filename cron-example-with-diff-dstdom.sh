@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-if [ "$( pt users -f username $USER -F role | head -n 1 | grep -v {} )" != "ROLE.SUPER" ];then
-	  echo "This script can only run from a user with ROLE.SUPER ie super user"
-	  exit 1
-fi
-
 FLAGS_PREFIX="/tmp/dst-dom-script-flag_"
 WORK_DIR="/tmp/dst-dom-script"
 
@@ -15,6 +10,12 @@ export CPDIR=/opt/fw1
 export FWDIR=${CPDIR}
 export SUROOT=/var/suroot
 . /pfrm2.0/etc/bashrc
+
+if [ "$( pt users -f username $USER -F role | head -n 1 | grep -v {} )" != "ROLE.SUPER" ];then
+	  echo "This script can only run from a user with ROLE.SUPER ie super user"
+	  exit 1
+fi
+
 
 if [ -f "${FLAGS_PREFIX}unsetx" ];then
         set -x
