@@ -1,5 +1,15 @@
 #!/usr/bin/env bash
 
+FORCE_ADMIN_USER="1"
+
+if [ "${FORCE_ADMIN_USER}" -eq "1" ];then
+        if [ "${USER}" != "admin" ]; then
+          echo "Switching to admin user"
+          exec su "admin" "$0" -- "$@"
+          exit $?
+        fi
+fi
+
 echo "Started Running: \"$0\"" |logger
 START_EXECUTION_TIME=$( date +"%Y_%m_%d_%H_%M_%SS" )
 START_EXECUTION_DATE=$( date +"%Y_%m_%d" )
