@@ -11,6 +11,8 @@ DRY_RUN="0"
 CLEANUP_AFTER="1"
 REGEX_FLAG_ENABLED="0"
 LOCK_FILE="/tmp/dst-domain-cron-lockfile"
+DUMP_ENV="/tmp/env_cd5fecd5-7123-4a21-bd02-242f1d695a6d"
+
 export CA_CERT_BUNDLE_PATH="/pfrm2.0/opt/fw1/bin/ca-bundle.crt"
 export SSL_CERT_FILE="${CA_CERT_BUNDLE_PATH}"
 #alias curl_cli="curl_cli --cacert ${CA_CERT_BUNDLE_PATH}"
@@ -40,6 +42,11 @@ fi
 
 if [ -f "${FLAGS_PREFIX}add-regex-flag" ];then
 	REGEX_FLAG_ENABLED="1"
+fi
+
+if [ -f "${FLAGS_PREFIX}dump-env" ];then
+	env |tee "${DUMP_ENV}"
+	export | tee -a "${DUMP_ENV}"
 fi
 
 function dstdomain_to_regex() {
@@ -114,7 +121,7 @@ fi
 
 TMP_DOWNLOAD_FILE=$(mktemp)
 
-curl_cli --cacert "${CA_CERT_BUNDLE_PATH}" -s "${URL}" -o "${TMP_DOWNLOAD_FILE}"
+/opt/fw1/bin/curl_cli --cacert "${CA_CERT_BUNDLE_PATH}" -s "${URL}" -o "${TMP_DOWNLOAD_FILE}"
 RES=$?
 
 if [ "${RES}" -gt "0" ];then
