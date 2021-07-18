@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 
+FLAGS_PREFIX="/tmp/dst-dom-script-flag_"
+
+if [ -f "${FLAGS_PREFIX}unsetx" ];then
+        set -x
+fi
+
 DEBUG="0"
 DRY_RUN="0"
 CLEANUP_AFTER="1"
 REGEX_FLAG_ENABLED="0"
 LOCK_FILE="/tmp/dst-domain-cron-lockfile"
-FLAGS_PREFIX="/tmp/dst-dom-script-flag_"
 
 if [ -f "${LOCK_FILE}" ];then
 	echo "Lockfile exits, stopping update"
@@ -123,9 +128,20 @@ TMP_CLISH_TRANSACTION_FILE=$( mktemp )
 
 TMP_DIFF_FILE=$( mktemp )
 
-clish -c "show configuration"|egrep "^set application application-name \"${APP_NAME}\"" > ${TMP_CURRENT_CONFIG_FILE}
+#clish -c "show configuration"|egrep "^set application application-name \"${APP_NAME}\"" > ${TMP_CURRENT_CONFIG_FILE}
 
-CURRENT_APP_CONTENT=$( cat ${TMP_CURRENT_CONFIG_FILE}| awk 'BEGIN { FS = " add url " } ; { print $2}' )
+TMP_CURRENT_APP_CONTENT_FILE=$( mktemp )
+
+clish -c "show application application-name \"${APP_NAME}\"" | sed -e "s@^description.*@@g" \
+        -e "s@^application\-name\:.*@@g" \
+        -e "s@^application\-id\:.*@@g" \
+        -e "s@^Categories\:.*@@g" \
+        -e "s@^application\-urls\:@@g" \
+        -e 's@^[ \t]\+@@g' \
+        -e '/^$/ d' > ${TMP_CURRENT_APP_CONTENT_FILE}
+
+CURRENT_APP_CONTENT_REGEX=$( cat ${TMP_CURRENT_APP_CONTENT_FILE} |sort )
+REMOTE_APP_CONTENT_REGEX=$( mktemp )
 
 while IFS= read -r line
 do
@@ -134,50 +150,30 @@ do
                 echo "${line}" >&2
         fi
 
-	dstdomain_to_regex_result="$(dstdomain_to_regex ${line})"
-	while IFS= read -r regex; do
-	        echo "${CURRENT_APP_CONTENT}"|  grep -x -F "${regex}" >/dev/null
-	        RES=$?
-
-	       if [ "${RES}" -gt "0" ];then
-		       if [ "${REGEX_FLAG_ENABLED}" -eq "1" ];then
-	        	       echo "set application application-name \"${APP_NAME}\" regex-url true add url \"${regex}\"" >> ${TMP_CLISH_UPDATE_FILE}
-		       else
-		               echo "set application application-name \"${APP_NAME}\" add url \"${regex}\"" >> ${TMP_CLISH_UPDATE_FILE}
-		       fi
-        	fi
-
-	done <<< "${dstdomain_to_regex_result}"
-
+        dstdomain_to_regex_result="$(dstdomain_to_regex ${line})"
+	echo "${dstdomain_to_regex_result}" |tee -a "${REMOTE_APP_CONTENT_REGEX}" >/dev/null
 
 done < ${TMP_DOWNLOAD_FILE}
 
-cat "${TMP_CURRENT_CONFIG_FILE}" |sort > "${TMP_CURRENT_CONFIG_FILE}.in"
-mv -v -f "${TMP_CURRENT_CONFIG_FILE}.in" "${TMP_CURRENT_CONFIG_FILE}" 
+SORTED_REMOTE_APP_CONTENT_REGEX=$( cat ${REMOTE_APP_CONTENT_REGEX}| sort| uniq )
+echo "${SORTED_REMOTE_APP_CONTENT_REGEX}" > "${REMOTE_APP_CONTENT_REGEX}"
 
-cat "${TMP_CLISH_UPDATE_FILE}" |sort |uniq > "${TMP_CLISH_UPDATE_FILE}.in"
-mv -v -f "${TMP_CLISH_UPDATE_FILE}.in" "${TMP_CLISH_UPDATE_FILE}"
+DIFF=$( diff "${TMP_CURRENT_APP_CONTENT_FILE}" "${REMOTE_APP_CONTENT_REGEX}" |sed -e "1,3d;" )
+echo "DIFF CMD: diff ${TMP_CURRENT_APP_CONTENT_FILE} ${REMOTE_APP_CONTENT_REGEX} | sed -e \"1,3d;\""
 
-DIFF=$(diff "${TMP_CURRENT_CONFIG_FILE}" "${TMP_CLISH_UPDATE_FILE}" )
-echo "DIFF CMD: diff ${TMP_CURRENT_CONFIG_FILE} ${TMP_CLISH_UPDATE_FILE}"
-echo "${DIFF}" > "${TMP_DIFF_FILE}"
-
-if [ "${DEBUG}" -gt "0" ];then
-        echo "DIFF Size: $(echo "${DIFF}"|wc -l)"
-        echo "${DIFF}"
-fi
-
-DELETE_OBJECTS=$(echo "${DIFF}" |egrep "^-set " |awk '{print $7}')
+##
+DELETE_OBJECTS=$( echo "${DIFF}" |egrep "^\-" |sed -e "s@^\-@@")
 
 for object in ${DELETE_OBJECTS}; do
-#	LOCAL_OBJECT=$( echo ${object}| sed -e "s@\.@\\\.@g" -e "s@\-@\\\-@g" -e "s@\_@\\\_@g" )
         echo "set application application-name \"${APP_NAME}\" remove url ${object}" >> ${TMP_CLISH_TRANSACTION_FILE}
-#        echo "set application application-name \"${APP_NAME}\" remove url ${LOCAL_OBJECT}" >> ${TMP_CLISH_TRANSACTION_FILE}
 done
 
-echo "${DIFF}" |egrep "^\+set " |sed -e "s@^\+set @set @g" >>  ${TMP_CLISH_TRANSACTION_FILE}
+APPEND_OBJECTS=$( echo "${DIFF}" |egrep "^\+" |sed -e "s@^\+@@")
 
-#cat "${TMP_CLISH_TRANSACTION_FILE}"
+for object in ${APPEND_OBJECTS}; do
+        echo "set application application-name \"${APP_NAME}\" add url ${object}" >> ${TMP_CLISH_TRANSACTION_FILE}
+done
+##
 
 sed -i -e 's@\\@\\\\\\@g' "${TMP_CLISH_TRANSACTION_FILE}"
 
@@ -191,6 +187,8 @@ echo "Cleaning up files ..."
 if [ "${CLEANUP_AFTER}" -eq "1" ];then
         rm -v "${TMP_DOWNLOAD_FILE}"
         rm -v "${TMP_CLISH_UPDATE_FILE}"
+	rm -v "${TMP_CURRENT_APP_CONTENT_FILE}"
+	rm -v "${REMOTE_APP_CONTENT_REGEX}"
         rm -v "${TMP_CURRENT_CONFIG_FILE}"
         rm -v "${TMP_DIFF_FILE}"
         rm -v "${TMP_CLISH_TRANSACTION_FILE}"
@@ -199,6 +197,8 @@ else
         echo "Don't forget to cleanup the files:"
         echo "${TMP_DOWNLOAD_FILE}"
         echo "${TMP_CLISH_UPDATE_FILE}"
+	echo "${TMP_CURRENT_APP_CONTENT_FILE}"
+	echo  "${REMOTE_APP_CONTENT_REGEX}"
         echo "${TMP_CURRENT_CONFIG_FILE}"
         echo "${TMP_DIFF_FILE}"
         echo "${TMP_CLISH_TRANSACTION_FILE}"
@@ -207,3 +207,5 @@ fi
 rm -fv "${LOCK_FILE}"
 
 logger "Finished running a dstdomain update for: APP => \"APP_NAME\" , from URL => \"\"${URL}"
+
+set +x
