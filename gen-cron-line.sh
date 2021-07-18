@@ -28,7 +28,7 @@ echo
 
 DST_DOMAIN_LIST_URL=$(head -1 block-list-dst-domain-url)
 APP_NAME="NgTechBlockListDstDomain"
-echo "*/1 * * * * bin/bash ${SCRIPT_PATH} ${APP_NAME} ${DST_DOMAIN_LIST_URL} >/dev/null 2>&1"
+echo "*/1 * * * * /bin/bash ${SCRIPT_PATH} ${APP_NAME} ${DST_DOMAIN_LIST_URL} >/dev/null 2>&1"
 
 
 SCRIPT_MD5_SUM=$(md5sum collect-clish-scripts.sh|awk '{print $1}')

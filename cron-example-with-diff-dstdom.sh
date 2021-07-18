@@ -11,6 +11,10 @@ DRY_RUN="0"
 CLEANUP_AFTER="1"
 REGEX_FLAG_ENABLED="0"
 LOCK_FILE="/tmp/dst-domain-cron-lockfile"
+export CA_CERT_BUNDLE_PATH="/pfrm2.0/opt/fw1/bin/ca-bundle.crt"
+export SSL_CERT_FILE="${CA_CERT_BUNDLE_PATH}"
+alias curl_cli="curl_cli --cacert ${CA_CERT_BUNDLE_PATH}"
+
 
 if [ -f "${LOCK_FILE}" ];then
 	echo "Lockfile exits, stopping update"
@@ -111,7 +115,7 @@ fi
 
 TMP_DOWNLOAD_FILE=$(mktemp)
 
-wget "${URL}" -O ${TMP_DOWNLOAD_FILE}
+curl_cli --cacert ${CA_CERT_BUNDLE_PATH} -s "${URL}" -o ${TMP_DOWNLOAD_FILE}
 RES=$?
 
 if [ "${RES}" -gt "0" ];then
