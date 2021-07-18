@@ -1,13 +1,8 @@
 #!/usr/bin/env bash
 
-FORCE_ADMIN_USER="1"
-
-if [ "${FORCE_ADMIN_USER}" -eq "1" ];then
-	if [ "${USER}" != "admin" ]; then
-	  echo "Switching to admin user"
-	  exec su "admin" "$0" -- "$@"
-	  exit $?
-	fi
+if [ "$( pt users -f username $USER -F role | head -n 1 | grep -v {} )" != "ROLE.SUPER" ];then
+	  echo "This script can only run from a user with ROLE.SUPER ie super user"
+	  exit 1
 fi
 
 FLAGS_PREFIX="/tmp/dst-dom-script-flag_"
