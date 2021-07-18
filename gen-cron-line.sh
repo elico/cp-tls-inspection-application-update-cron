@@ -15,7 +15,7 @@ echo "####"
 echo
 
 SCRIPT_TMP_PATH="/tmp/cron-example-with-diff-dstdom.sh_73ffe3f6-b85a-46ed-9e11-07865339759c"
-echo "*/5 * * * * /usr/bin/md5sum ${SCRIPT_PATH} | /bin/grep \"^${SCRIPT_MD5_SUM} \" || curl_cli --cacert ${CA_CERT_BUNDLE_PATH} -s ${SCRIPT_URL} -o ${SCRIPT_TMP_PATH} >/dev/null 2>&1 && /usr/bin/md5sum ${SCRIPT_TMP_PATH} |/bin/grep \"^${SCRIPT_MD5_SUM} \" && mv ${SCRIPT_TMP_PATH} ${SCRIPT_PATH}"
+echo "*/5 * * * * (/usr/bin/md5sum ${SCRIPT_PATH} | /bin/grep \"^${SCRIPT_MD5_SUM} \") || (curl_cli --cacert ${CA_CERT_BUNDLE_PATH} -s ${SCRIPT_URL} -o ${SCRIPT_TMP_PATH} >/dev/null 2>&1 && /usr/bin/md5sum ${SCRIPT_TMP_PATH} |/bin/grep \"^${SCRIPT_MD5_SUM} \" && mv ${SCRIPT_TMP_PATH} ${SCRIPT_PATH} )"
 
 
 echo "####"
@@ -39,7 +39,7 @@ SCRIPT_TMP_PATH="/tmp/collect-clish-scripts.sh_73ffe3f6-b85a-46ed-9e11-078653397
 echo "####"
 echo
 
-echo "*/5 * * * * /usr/bin/md5sum ${SCRIPT_PATH} | /bin/grep \"^${SCRIPT_MD5_SUM} \" || curl_cli --cacert ${CA_CERT_BUNDLE_PATH} -s ${SCRIPT_URL} -o ${SCRIPT_TMP_PATH} >/dev/null 2>&1 && /usr/bin/md5sum ${SCRIPT_TMP_PATH} |/bin/grep \"^${SCRIPT_MD5_SUM} \" && mv ${SCRIPT_TMP_PATH} ${SCRIPT_PATH}"
+echo "*/5 * * * * (/usr/bin/md5sum ${SCRIPT_PATH} | /bin/grep \"^${SCRIPT_MD5_SUM} \") || (curl_cli --cacert ${CA_CERT_BUNDLE_PATH} -s ${SCRIPT_URL} -o ${SCRIPT_TMP_PATH} >/dev/null 2>&1 && /usr/bin/md5sum ${SCRIPT_TMP_PATH} |/bin/grep \"^${SCRIPT_MD5_SUM} \" && mv ${SCRIPT_TMP_PATH} ${SCRIPT_PATH} )"
 
 echo "####"
 echo

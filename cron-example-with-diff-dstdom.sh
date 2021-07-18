@@ -115,12 +115,14 @@ fi
 
 TMP_DOWNLOAD_FILE=$(mktemp)
 
-curl_cli --cacert ${CA_CERT_BUNDLE_PATH} -s "${URL}" -o ${TMP_DOWNLOAD_FILE}
+curl_cli --cacert "${CA_CERT_BUNDLE_PATH}" -s "${URL}" -o ${TMP_DOWNLOAD_FILE}
 RES=$?
 
 if [ "${RES}" -gt "0" ];then
         echo "Error Downloading file from URL: \"${URL}\""
+        logger "Error Downloading file from URL: \"${URL}\""
         rm -v "${TMP_DOWNLOAD_FILE}"
+        rm -fv "${LOCK_FILE}"
         exit ${RES}
 fi
 
