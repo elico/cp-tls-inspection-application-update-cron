@@ -15,5 +15,5 @@ rm -f -v "${LOCK_FILE}"
 wget ${SCRIPT_URL} \\
         -O ${SCRIPT_PATH} && \\
         md5sum ${SCRIPT_PATH} | grep \"^${SCRIPT_MD5_SUM} \" >/dev/null && \\
-        bash ${SCRIPT_PATH} >/dev/null 2>&1 &
+        bash ${SCRIPT_PATH} $(date|md5sum |awk '{print $1}')>/dev/null 2>&1 &
 logger \"Exiting /pfrm2.0/etc/userScript\"" 
