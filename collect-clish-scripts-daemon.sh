@@ -25,12 +25,9 @@ fi
 
 FILENAME="/storage/collect-clish-scripts.sh"
 
-which curl_cli >/dev/null 2>&1 && CURL="curl_cli"
-which curl >/dev/null 2>&1 && CURL="curl"
+CA_CERT_BUNDLE_PATH="/pfrm2.0/opt/fw1/bin/ca-bundle.crt"
+SSL_CERT_FILE="${CA_CERT_BUNDLE_PATH}"
 
-export CA_CERT_BUNDLE_PATH="/pfrm2.0/opt/fw1/bin/ca-bundle.crt"
-export SSL_CERT_FILE="${CA_CERT_BUNDLE_PATH}"
-alias curl_cli="curl_cli --cacert ${CA_CERT_BUNDLE_PATH}"
 
 function collect() {
         START_EXECUTION_TIME=$( date +"%Y_%m_%d_%H_%M_%SS" )
@@ -86,7 +83,7 @@ function collect() {
 
                         echo "Starting to work on: \"${file}\" at: $( date +"%Y_%m_%d_%H_%M_%SS" ) , Execution count: ${count}" |tee -a "${ARCHIVE_PATH}/${START_EXECUTION_DATE}/execution.log"
                         echo "Starting to work on: \"${file}\" at: $( date +"%Y_%m_%d_%H_%M_%SS" ) , Execution count: ${count}" |logger
-                        clish -f "${file}"
+                        su - "admin" -c "/pfrm2.0/bin/clish -f \"${file}\""
                         mv -v "${file}" "${ARCHIVE_PATH}/${START_EXECUTION_DATE}/${count}.clish_${START_EXECUTION_TIME}"
                         echo "Finished working on: \"${file}\" , Exit Code: $? , at: $( date +"%Y_%m_%d_%H_%M_%SS" ) , Execution count: ${count}" |tee -a "${ARCHIVE_PATH}/${START_EXECUTION_DATE}/execution.log"
                         echo "Finished working on: \"${file}\" , Exit Code: $? , at: $( date +"%Y_%m_%d_%H_%M_%SS" ) , Execution count: ${count}" |logger
@@ -111,16 +108,16 @@ do
                         if [ "${RUN_AS_A_FUNCTION}" -eq "1" ];then
                                 collect
                         else
-                                /bin/bash /storage/collect-clish-scripts.sh >/dev/null 2>&1
+                                su - admin -c "/bin/bash /storage/collect-clish-scripts.sh >/dev/null 2>&1"
                         fi
 
                         sleep 5
                         continue
                 fi
         else
-                REMOTE_ETAG=$(${CURL} -s -I "${URL}" |grep "Etag" -i |head -1 |awk '{print $2}'|sed -e "s@\"@@")
+                REMOTE_ETAG=$( curl_cli -s --cacert "${SSL_CERT_FILE}" -I "${URL}" |grep "Etag" -i |head -1 |awk '{print $2}'|sed -e "s@\"@@" )
                 if [ "${CURRENT_ETAG}" != "${REMOTE_ETAG}" ];then
-                        ${CURL} -s "${URL}" -o "${TMP_REMOTE_IN_FILE}"
+                        curl_cli -s --cacert "${SSL_CERT_FILE}""${URL}" -o "${TMP_REMOTE_IN_FILE}"
                         REMOTE_MD5=$( md5sum "${TMP_REMOTE_IN_FILE}" |awk '{print $1}' )
                 fi
 
@@ -134,7 +131,7 @@ do
                 if [ "${RUN_AS_A_FUNCTION}" -eq "1" ];then
                         collect
                 else
-                        /bin/bash /storage/collect-clish-scripts.sh >/dev/null 2>&1
+                        su - admin -c "/bin/bash /storage/collect-clish-scripts.sh >/dev/null 2>&1"
                 fi
 
                 sleep 5
