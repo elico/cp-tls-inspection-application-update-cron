@@ -5,6 +5,7 @@ DRY_RUN="0"
 CLEANUP_AFTER="1"
 REGEX_FLAG_ENABLED="0"
 LOCK_FILE="/tmp/dst-domain-cron-lockfile"
+FLAGS_PREFIX="/tmp/dst-dom-script-flag_"
 
 if [ -f "${LOCK_FILE}" ];then
 	echo "Lockfile exits, stopping update"
@@ -13,19 +14,23 @@ fi
 
 touch "${LOCK_FILE}"
 
-if [ -f "debug" ];then
+if [ -f "${FLAGS_PREFIX}debug" ];then
 	DEBUG="1"
 fi
 
-if [ -f "dry-run" ];then
+if [ -f "${FLAGS_PREFIX}dry-run" ];then
 	DRY_RUN="1"
 fi
 
-if [ -f "cleanup-after" ];then
+if [ -f "${FLAGS_PREFIX}cleanup-after" ];then
 	CLEANUP_AFTER="1"
 fi
 
-if [ -f "add-regex-flag" ];then
+if [ -f "${FLAGS_PREFIX}dont-cleanup-after" ];then
+	CLEANUP_AFTER="0"
+fi
+
+if [ -f "${FLAGS_PREFIX}add-regex-flag" ];then
 	REGEX_FLAG_ENABLED="1"
 fi
 
