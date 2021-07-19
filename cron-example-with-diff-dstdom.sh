@@ -246,6 +246,6 @@ fi
 
 rm -fv "${LOCK_FILE}"
 
-logger "Finished running a dstdomain update for: APP => \"${APP_NAME}\" , from URL => \"\"${URL}"
+logger "Finished running a dstdomain update for: APP => \"${APP_NAME}\" , from URL => \"${URL}\""
 
 set +x
