@@ -1,7 +1,16 @@
 #!/usr/bin/env bash
 
 SCRIPT_MD5_SUM=$( md5sum collect-clish-scripts-daemon.sh |awk '{print $1}' )
-SCRIPT_URL="https://raw.githubusercontent.com/elico/cp-tls-inspection-application-update-cron/master/collect-clish-scripts-daemon.sh"
+
+GOGS_GIT_PREFIX=$( cat gogs_url_prefix )
+GITHUB_GIT_PREFIX=$( github_url_prefix  )
+
+if [ -f "use-gogs" ];then
+	SCRIPT_URL="${GOGS_GIT_PREFIX}collect-clish-scripts-daemon.sh"
+else
+	SCRIPT_URL="${GITHUB_GIT_PREFIX}collect-clish-scripts-daemon.sh"
+fi
+
 SCRIPT_PATH="/storage/collect-clish-scripts-daemon.sh"
 USERSCRIPT_PATH="/pfrm2.0/etc/userScript"
 LOCK_FILE="/tmp/clish-scripts-collector-cron-lockfile"
