@@ -76,6 +76,10 @@ function dstdomain_to_regex() {
         dstdomain="0"
         dotsuffix="0"
 
+        if [ -z "${domain}" ];then
+                return
+        fi
+
         echo "${domain}" | grep -e "^\." > /dev/null
         if [ "$?" -eq "0" ];then
                 dstdomain=1
