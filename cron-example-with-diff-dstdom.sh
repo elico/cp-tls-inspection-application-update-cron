@@ -219,7 +219,7 @@ done
 sed -i -e 's@\\@\\\\\\@g' "${TMP_CLISH_TRANSACTION_FILE}"
 
 if [ "${DRY_RUN}" -eq "0" ];then
-        clish -f "${TMP_CLISH_TRANSACTION_FILE}"
+        clish -i -f "${TMP_CLISH_TRANSACTION_FILE}"
         echo "$? exit code from clish -f"
 else
         echo "Running in DRY-RUN MODE"
