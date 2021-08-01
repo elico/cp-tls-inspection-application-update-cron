@@ -242,7 +242,7 @@ else
         echo "${TMP_DOWNLOAD_FILE}"
         echo "${TMP_CLISH_UPDATE_FILE}"
         echo "${TMP_CURRENT_APP_CONTENT_FILE}"
-        echo  "${REMOTE_APP_CONTENT_REGEX}"
+        echo "${REMOTE_APP_CONTENT_REGEX}"
         echo "${TMP_CURRENT_CONFIG_FILE}"
         echo "${TMP_DIFF_FILE}"
         echo "${TMP_CLISH_TRANSACTION_FILE}"
