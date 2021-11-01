@@ -21,7 +21,7 @@ if [ -f "${FLAGS_PREFIX}unsetx" ];then
         set -x
 fi
 
-DEBUG="0"
+DEBUG="1"
 DRY_RUN="0"
 CLEANUP_AFTER="1"
 REGEX_FLAG_ENABLED="0"
