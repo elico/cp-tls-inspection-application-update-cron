@@ -140,6 +140,7 @@ fi
 
 TMP_DOWNLOAD_FILE=$(mktemp)
 
+# The next is to avoid missing new line in the end of the file in some cases
 /opt/fw1/bin/curl_cli -s --cacert "${SSL_CERT_FILE}" "${URL}" -o "${TMP_DOWNLOAD_FILE}" >> /tmp/log.1
 RES="$?"
 if [ "${RES}" -gt "0" ];then
@@ -149,6 +150,8 @@ if [ "${RES}" -gt "0" ];then
         rm -fv "${LOCK_FILE}"
         exit ${RES}
 fi
+# The next is to avoid missing new line in the end of the file in some cases
+echo "" >> "${TMP_DOWNLOAD_FILE}"
 
 TMP_CLISH_UPDATE_FILE=$( mktemp )
 
